@@ -21,6 +21,9 @@ import {
   Select,
   FormControl,
   Alert,
+  Slider,
+  Card,
+  CardContent,
 } from "@mui/material";
 import LogoIcon from "@mui/icons-material/AccountCircle";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -37,12 +40,18 @@ const MemberForm: React.FC<MemberFormProps> = ({ isEdit = false }) => {
     name: "",
     position: "",
     reports_to: "",
+    file_url: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [alert, setAlert] = useState<{
     severity: string;
     message: string;
   } | null>(null);
+  const [skills, setSkills] = useState({
+    leadership: 50,
+    communication: 50,
+    problemSolving: 50,
+  });
   const { memberId } = useParams<{ memberId: string }>();
   const navigate = useNavigate();
 
@@ -51,7 +60,13 @@ const MemberForm: React.FC<MemberFormProps> = ({ isEdit = false }) => {
       const fetchMember = async () => {
         try {
           const response = await getMemberById(memberId);
-          setMember(response.data);
+          const fetchedMember = response.data;
+          setMember(fetchedMember);
+          setSkills({
+            communication: fetchedMember.skills?.communication ?? 50,
+            leadership: fetchedMember.skills?.leadership ?? 50,
+            problemSolving: fetchedMember.skills?.problemSolving ?? 50,
+          });
         } catch (error) {
           console.error("Failed to fetch member", error);
         }
@@ -82,21 +97,14 @@ const MemberForm: React.FC<MemberFormProps> = ({ isEdit = false }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Skills saat submit:", skills); // Tambahkan log ini
     try {
       const formData = new FormData();
-      if (member.name) {
-        formData.append("name", member.name);
-      }
-      if (member.position) {
-        formData.append("position", member.position);
-      }
-      if (member.reports_to) {
-        formData.append("reports_to", member.reports_to);
-      }
-
-      if (selectedFile) {
-        formData.append("file", selectedFile); // Menambahkan file gambar
-      }
+      formData.append("name", member.name);
+      formData.append("position", member.position);
+      formData.append("reports_to", member.reports_to || "");
+      if (selectedFile) formData.append("file", selectedFile);
+      formData.append("skills", JSON.stringify(skills));
 
       if (isEdit && memberId) {
         await updateMember(memberId, formData);
@@ -111,11 +119,17 @@ const MemberForm: React.FC<MemberFormProps> = ({ isEdit = false }) => {
           message: "Member added successfully.",
         });
       }
+
       setTimeout(() => navigate("/members"), 2000);
     } catch (error) {
       console.error("Failed to save member", error);
       setAlert({ severity: "error", message: "Failed to save member." });
     }
+  };
+
+  const handleSkillChange = (skill: string, value: number) => {
+    setSkills({ ...skills, [skill]: value });
+    console.log(`Updated ${skill}:`, value);
   };
 
   return (
@@ -144,7 +158,13 @@ const MemberForm: React.FC<MemberFormProps> = ({ isEdit = false }) => {
               <Grid item xs={12} sx={{ textAlign: "center" }}>
                 <Avatar
                   alt="Member Picture"
-                  src={selectedFile ? URL.createObjectURL(selectedFile) : ""}
+                  src={
+                    selectedFile
+                      ? URL.createObjectURL(selectedFile)
+                      : member.file_url
+                      ? `http://localhost:5000${member.file_url}`
+                      : ""
+                  }
                   sx={{ width: 80, height: 80, marginBottom: 2, mx: "auto" }}
                 />
                 <Button variant="contained" component="label">
@@ -196,6 +216,61 @@ const MemberForm: React.FC<MemberFormProps> = ({ isEdit = false }) => {
                   </Select>
                 </FormControl>
               </Grid>
+
+              {/* Skills Section */}
+              <Grid item xs={12}>
+                <Card elevation={3}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Skills & Expertise
+                    </Typography>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Box sx={{ textAlign: "center" }}>
+                        <Typography variant="body2">Leadership</Typography>
+                        <Slider
+                          orientation="vertical"
+                          value={skills.leadership}
+                          onChange={(e, value) =>
+                            handleSkillChange("leadership", value as number)
+                          }
+                          aria-labelledby="leadership-slider"
+                          valueLabelDisplay="auto"
+                          sx={{ height: 200 }}
+                        />
+                      </Box>
+                      <Box sx={{ textAlign: "center" }}>
+                        <Typography variant="body2">Communication</Typography>
+                        <Slider
+                          orientation="vertical"
+                          value={skills.communication}
+                          onChange={(e, value) =>
+                            handleSkillChange("communication", value as number)
+                          }
+                          aria-labelledby="communication-slider"
+                          valueLabelDisplay="auto"
+                          sx={{ height: 200 }}
+                        />
+                      </Box>
+                      <Box sx={{ textAlign: "center" }}>
+                        <Typography variant="body2">Problem Solving</Typography>
+                        <Slider
+                          orientation="vertical"
+                          value={skills.problemSolving}
+                          onChange={(e, value) =>
+                            handleSkillChange("problemSolving", value as number)
+                          }
+                          aria-labelledby="problem-solving-slider"
+                          valueLabelDisplay="auto"
+                          sx={{ height: 200 }}
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+
               <Grid item xs={12}>
                 <Button
                   type="submit"

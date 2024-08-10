@@ -4,12 +4,9 @@ const API_URL = "http://localhost:5000/api";
 
 const getAuthHeader = (): { headers: { Authorization?: string } } => {
   const token = localStorage.getItem("googleToken");
-  if (token) {
-    return { headers: { Authorization: `Bearer ${token}` } };
-  } else {
-    console.error("No token found, user might not be logged in.");
-    return { headers: {} };
-  }
+  return token
+    ? { headers: { Authorization: `Bearer ${token}` } }
+    : { headers: {} };
 };
 
 export interface Member {
@@ -17,6 +14,12 @@ export interface Member {
   name: string;
   position: string;
   reports_to?: string;
+  file_url?: string;
+  skills?: {
+    communication: number;
+    leadership: number;
+    problemSolving: number;
+  };
 }
 
 export const getMembers = async (): Promise<AxiosResponse<Member[]>> => {
@@ -57,12 +60,21 @@ export const updateMember = async (
   memberId: string,
   data: FormData
 ): Promise<AxiosResponse<Member>> => {
+  const skills = {
+    communication: Number(data.get("communication")),
+    leadership: Number(data.get("leadership")),
+    problemSolving: Number(data.get("problemSolving")),
+  };
+  data.set("skills", JSON.stringify(skills));
+
   try {
-    return await axios.put(
-      `${API_URL}/members/${memberId}`,
-      data,
-      getAuthHeader()
-    );
+    return await axios.put(`${API_URL}/members/${memberId}`, data, {
+      ...getAuthHeader(),
+      headers: {
+        "Content-Type": "multipart/form-data",
+        ...getAuthHeader().headers,
+      },
+    });
   } catch (error) {
     console.error(`Failed to update member with ID ${memberId}`, error);
     throw error;
