@@ -3,6 +3,7 @@
 This project is an Organization Management App that allows users to manage members within an organization. It includes features like Google login, CRUD operations for member management, and a responsive frontend built with React.js. The backend is powered by Flask, and the app is designed to be scalable and easy to extend.
 
 ## Demo
+https://github.com/user-attachments/assets/f47bc061-2e04-4a77-a6c4-9249f542aea1
 
 ## Features
 
