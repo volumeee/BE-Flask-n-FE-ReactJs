@@ -60,16 +60,8 @@ export const updateMember = async (
   memberId: string,
   data: FormData
 ): Promise<AxiosResponse<Member>> => {
-  const skills = {
-    communication: Number(data.get("communication")),
-    leadership: Number(data.get("leadership")),
-    problemSolving: Number(data.get("problemSolving")),
-  };
-  data.set("skills", JSON.stringify(skills));
-
   try {
     return await axios.put(`${API_URL}/members/${memberId}`, data, {
-      ...getAuthHeader(),
       headers: {
         "Content-Type": "multipart/form-data",
         ...getAuthHeader().headers,

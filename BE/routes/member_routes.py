@@ -67,19 +67,19 @@ def add_member():
 @login_required
 def update_member_route(member_id):
     data = request.form.to_dict()
+    
+    # Mengatasi jika data skills datang dalam JSON, bukan form-data
     skills_data = request.form.get('skills')
-    
-    print("Data received:", data)  # Logging data yang diterima
-    print("Skills received:", skills_data)  # Logging skills yang diterima
-    
+    if not skills_data and request.is_json:
+        skills_data = request.json.get('skills')
+
     if skills_data:
         try:
-            data['skills'] = json.loads(skills_data)
+            data['skills'] = json.loads(skills_data) if isinstance(skills_data, str) else skills_data
         except json.JSONDecodeError as e:
             return jsonify({"error": f"Invalid JSON data: {str(e)}"}), 400
 
     file = request.files.get('file')
-
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         unique_suffix = f"{uuid.uuid4()}{os.path.splitext(filename)[1]}"
@@ -91,10 +91,15 @@ def update_member_route(member_id):
         file.save(file_path)
         data['file_url'] = f'/data/{unique_suffix}'
 
+    # Logging data untuk debug
+    print(f"Updating member {member_id} with data: {data}")
+
     updated_member = update_member(member_id, data)
     if updated_member:
         return jsonify(updated_member)
     return jsonify({"error": "Member not found"}), 404
+
+
 
 @member_bp.route('/api/members/<member_id>', methods=['DELETE'])
 @login_required

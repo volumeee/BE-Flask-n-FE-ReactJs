@@ -98,13 +98,18 @@ const MemberForm: React.FC<MemberFormProps> = ({ isEdit = false }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Skills saat submit:", skills); // Tambahkan log ini
+
     try {
       const formData = new FormData();
       formData.append("name", member.name);
       formData.append("position", member.position);
       formData.append("reports_to", member.reports_to || "");
-      if (selectedFile) formData.append("file", selectedFile);
-      formData.append("skills", JSON.stringify(skills));
+
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
+      formData.append("skills", JSON.stringify(skills)); // Pastikan ini dikirim sebagai JSON string
 
       if (isEdit && memberId) {
         await updateMember(memberId, formData);
